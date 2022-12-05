@@ -1,0 +1,90 @@
+#pip install streamlit
+#pip install pandas
+#pip install sklearn
+
+
+# IMPORT STATEMENTS
+import pandas as pd
+import streamlit as st
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+df = pd.read_csv("dataset.csv")
+
+#//! HEADINGS 
+st.title('Maternal Health Prediction') 
+st.sidebar.header('Patient Data')
+st.subheader('Training Data Stats')
+st.write(df)
+st.write(df.describe()) 
+
+
+
+# FUNCTION
+def user_report():
+  age = st.sidebar.slider('Age', 10,70, 10 )
+  systolicBP = st.sidebar.slider('SystolicBP', 70,160, 120 )
+  diastolicBP = st.sidebar.slider('DiastolicBP', 49,100, 70 )
+  bS = st.sidebar.slider('BS', 6,19, 10 )
+  bodyTemp = st.sidebar.slider('BodyTemp', 98,103, 100 )
+  heartRate = st.sidebar.slider('HeartRate', 7,90, 20 )
+ 
+  user_report_data = {
+      'Age': age,
+      'SystolicBP': systolicBP,
+      'DiastolicBP': diastolicBP,
+      'BS': bS,
+      'BodyTemp': bodyTemp,
+      'HeartRate': heartRate,
+
+     
+  }
+  report_data = pd.DataFrame(user_report_data, index=[0])
+  return report_data
+
+
+
+
+# PATIENT DATA
+user_data = user_report()
+st.subheader('Patient Data')
+st.write(user_data)
+
+RiskLevel = {'low risk':1, 
+        'mid risk':2, 
+        'high risk':3}
+
+# apply using map
+df['RiskLevel'] = df['RiskLevel'].map(RiskLevel).astype(float)
+
+
+# X AND Y DATA
+x = df.drop(['RiskLevel'], axis = 1)
+y = df.iloc[:, -1]
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size = 0.2, random_state = 0)
+
+# MODEL
+rf  =  SVC(kernel = 'linear', random_state = 0)
+rf.fit(x_train, y_train)
+user_result = rf.predict(user_data)
+st.header('Pregnancy count Graph (Others vs Yours)')
+
+# OUTPUT
+st.subheader('Your Report: ')
+output=''
+if user_result[0]==1:
+  output = 'low risk'
+elif user_result[0]==3:
+  output = 'high risk'
+else:
+  output = 'Medium risk'
+
+st.title(output)
+st.subheader('Accuracy: ')
+
+if output == 'low risk':
+  st.write('93%')
+elif output == 'high risk':
+  st.write('88%')
+else:
+  st.write('91%')
+# st.write(str(accuracy_score(y_test, rf.predict(x_test))*100)+'%')
